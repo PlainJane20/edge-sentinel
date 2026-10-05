@@ -1,50 +1,140 @@
-# edge-sentinel
+<img src="docs/edge-sentinel-banner.svg" alt="Edge Sentinel — governed agents that act on the physical world" width="100%" />
 
-Governed agents that act on the physical world. An ESP32 streams telemetry to a
-gateway. A decision cascade chooses an action (`ignore`, `log`, `alert`,
-`shutdown`), and every action passes through a policy layer and a tamper-evident
-audit log.
+# Edge Sentinel
 
+### *Governed agents that act on the physical world*
+
+<div align="center">
+
+[![Python 3.11+](https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](firmware/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](agent/app.py)
+[![TypeSafe Jev](https://img.shields.io/badge/TypeSafe-Jev-14b8a6?style=for-the-badge)](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
+[![Tests](https://img.shields.io/badge/Unit_tests-16_passing-2a78d6?style=for-the-badge)](agent/tests/)
+
+</div>
+
+An ESP32 streams telemetry to a gateway. A decision cascade picks an action
+(`ignore`, `log`, `alert`, `shutdown`): a local hard limit first, then
+[Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) for fast
+typed decisions, then an LLM only when Jev is unsure. Every action passes a
+policy layer and lands in a hash-chained audit log.
+
+**Why this exists:** the agent projects in this portfolio govern what software
+agents may do, with approvals, budgets and audit trails. This one asks what
+changes when the action touches hardware: a wrong call can cost a device, and
+the model's answer cannot be the thing that decides how risky it is. It is also
+where I am learning embedded work (ESP32) and a new class of model (Jev, which
+returns typed decisions with confidence instead of text).
+
+> **Why this repo exists:** to build the governance guarantees my earlier repos
+> describe but do not fully enforce. A code review of them found a policy that
+> trusts a model's own risk label, approvals that anyone can grant to
+> themselves, and approvals that nothing checks before executing. Here those
+> are tested behaviors ([ADR 001](docs/adr/001-model-proposes-policy-decides.md)).
+
+> **Related work in this portfolio:** the cascade follows
+> [switchboard](https://github.com/PlainJane20/switchboard) (deterministic
+> routing with an LLM fallback). The propose, approve, execute flow follows
+> [it-agent-platform](https://github.com/PlainJane20/it-agent-platform), and the
+> fail-closed table follows
+> [agent-control-tower](https://github.com/PlainJane20/agent-control-tower).
+> [jev-agent-router](https://github.com/PlainJane20/jev-agent-router) benchmarks
+> Jev against an LLM on routing. Planned: model per-hop latency as a critical
+> path with [critical-path-radar](https://github.com/PlainJane20/critical-path-radar),
+> and score device health like [exec-status-rollup](https://github.com/PlainJane20/exec-status-rollup).
+
+## At a glance
+
+| | |
+|---|---|
+| **Problem** | An agent that acts on hardware must stay safe when its models are slow, wrong or down |
+| **Approach** | Local hard limit, then Jev, then LLM on low confidence, then rules; risk comes from a fixed table, not the model |
+| **Proof** | 16 offline tests covering escalation, fallback, approval expiry, self-approval and audit tampering |
+| **Output** | A typed decision per reading, an approval workflow, and an audit chain that can be verified |
+| **Not yet** | Flashed hardware, live Jev results, relay delivery, measured end-to-end latency |
+
+## Competencies demonstrated
+
+| Competency | Observable evidence |
+|---|---|
+| Systems design under uncertainty | Every model failure degrades to rules; critical readings never wait on a model |
+| Risk and governance | Per-operation policy table, unknown operations denied, single-use expiring approvals |
+| Auditability | Hash-chained log storing the reading, source and confidence behind each decision |
+| Hardware integration | ESP32 firmware and a written interface contract |
+| Measurement discipline | Unmeasured hops are labeled unmeasured; numbers state what they exclude |
+
+Full mapping to code and tests: [`docs/COMPETENCY_MAP.md`](docs/COMPETENCY_MAP.md).
+
+## Real output
+
+Produced by the real cascade on simulated data (a temperature ramp, rules only,
+no models). Regenerate with `benchmarks/make_figures.py`.
+
+![Decision per reading across a simulated temperature ramp](docs/images/decision_ramp.png)
+
+Gateway-side cost, measured in-process on an Apple M4 Pro over 2,000 readings
+(`benchmarks/latency_probe.py`). This excludes Wi-Fi, HTTP and any model call,
+so it is a floor and not an end-to-end figure:
+
+| Step | p50 | p95 |
+|---|---|---|
+| Cascade (rules path) | 0.001 ms | 0.002 ms |
+| Audit append | 0.063 ms | 0.108 ms |
+
+## Real findings from building this
+
+1. **A failing test caught a FastAPI pitfall.** Request models declared inside
+   `create_app` returned `KeyError: 'id'` in the API test. With
+   `from __future__ import annotations`, FastAPI could not resolve function-local
+   models and treated them as query parameters. Moving them to module level fixed it.
+2. **The approval gap in my earlier repos is easy to miss.** An approval that is
+   recorded but never checked before execution looks like a gate and behaves like
+   a notification. Here `execute` consumes an approval exactly once and rejects
+   anything pending, expired or already used.
+3. **The first simulated ramp never left the "log" band**, so the chart showed
+   nothing useful. I changed the simulation to heat up and then cool down so all
+   four actions appear. It is still simulated data, and the README says so.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    ESP[ESP32<br/>temperature, RSSI, heap] -->|POST /readings| GW[Gateway]
+    GW --> HL{hard limit?}
+    HL -->|yes| SD[shutdown<br/>no model]
+    HL -->|no| JEV[Jev<br/>typed action + confidence]
+    JEV -->|confident| ACT[action]
+    JEV -->|unsure or down| LLM[LLM / rules]
+    LLM --> ACT
+    SD --> POL[Policy tier]
+    ACT --> POL
+    POL --> AUD[(Hash-chained audit log)]
+    POL --> ESP
+    OP[Operator] -->|request, approve, execute| APP[Approvals<br/>SQLite, expiring]
+    APP --> AUD
 ```
-ESP32 --HTTP POST /readings--> agent (FastAPI)
-                                 1. local hard limit   (no model, deterministic)
-                                 2. Jev                (fast, typed, confidence)
-                                 3. LLM                (only if Jev is unsure)
-                                 4. rules              (if any model layer fails)
-                                 -> policy tier -> hash-chained audit log
-```
 
-## What is built
+More detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/INTERFACE_CONTROL_DOC.md`](docs/INTERFACE_CONTROL_DOC.md),
+[`docs/SLA_AND_LATENCY_BUDGET.md`](docs/SLA_AND_LATENCY_BUDGET.md).
 
-- Decision cascade with confidence-based escalation (`agent/cascade.py`)
-- Per-operation policy table; unknown operations denied; re-energize needs a
-  second person's approval, single-use, with expiry (`agent/policy.py`)
-- Hash-chained audit log with verification (`agent/audit.py`, `GET /audit/verify`)
-- Persistent approvals (SQLite) and decision history
-- ESP32 firmware that reports temperature, RSSI and heap (`firmware/`)
-- Simulated device so it runs with no hardware (`agent/simulate.py`)
-- 16 tests, runnable offline
-
-## What is not done yet
-
-- [ ] Firmware compiled and flashed on a real board
-- [ ] Jev verified against the live API (confidence extraction is unverified)
-- [ ] Relay command delivery to the device (the execute endpoint only logs)
-- [ ] Measured latency per hop and a Jev vs LLM benchmark
-- [ ] Dashboard for `/history`
-- [ ] Docs: architecture, interface contract, latency budget
-
-No performance numbers are claimed until they are measured.
-
-## Run
+## Setup
 
 ```bash
 cd agent
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m pytest
+```
+
+## Usage
+
+```bash
 uvicorn app:app --reload          # terminal 1
-python simulate.py                # terminal 2
+python simulate.py                # terminal 2: simulated ESP32
+curl localhost:8000/history
+curl localhost:8000/audit/verify
 ```
 
 Optional model layers:
@@ -53,19 +143,58 @@ Optional model layers:
 pip install "pydantic-ai-slim[typesafe,anthropic]"
 export TYPESAFE_API_KEY=...       # Jev
 export ANTHROPIC_API_KEY=...      # LLM fallback
+export JEV_CONFIDENCE_THRESHOLD=0.8
 ```
 
-## Flash a real ESP32
+Flash a real board (not yet tested on hardware):
 
 ```bash
 export WIFI_SSID=... WIFI_PASS=... GATEWAY_URL=http://<laptop-ip>:8000
 cd firmware && pio run -t upload && pio device monitor
 ```
 
-Run the gateway with `--host 0.0.0.0` so the board can reach it.
+## What I'd add next
+
+- [ ] Compile and flash the firmware, then measure the Wi-Fi + HTTP hop
+- [ ] Run against the live Jev API and verify how confidence is returned
+- [ ] Deliver approved commands to the device relay over MQTT
+- [ ] Benchmark Jev against an LLM on labeled sensor scenarios
+- [ ] Dashboard for `/history`
+- [ ] Authentication for devices and operators
 
 ## Known limits
 
 The audit chain detects edits and deletions, but anyone with file access can
-rewrite the whole chain. There is no authentication on the HTTP API yet; the
-`requester` and `approver` fields are self-declared.
+rewrite the whole chain. The API has no authentication, so `requester` and
+`approver` are self-declared. Do not expose it beyond a trusted network.
+
+## Repository map
+
+```
+edge-sentinel/
+├── agent/          cascade, policy, audit, API, simulator, tests
+├── firmware/       ESP32 PlatformIO project
+├── benchmarks/     figure generator and latency probe
+└── docs/           architecture, interface contract, latency budget, competency map, ADRs
+```
+
+## Contact
+
+<div align="center">
+
+### **Navi Sohi**
+*Technical Program Manager & Automation Engineer*
+
+<br>
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/navisohi/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PlainJane20)
+[![Email](https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](https://mail.google.com/mail/?view=cm&fs=1&to=nks.ai.dev@gmail.com)
+
+<br>
+
+</div>
+
+## License
+
+MIT
