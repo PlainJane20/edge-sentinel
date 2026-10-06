@@ -191,13 +191,23 @@ cd firmware && pio run -t upload && pio device monitor
 - [ ] Deliver approved commands to the device relay over MQTT
 - [ ] Compare Jev against an LLM on the same sensor scenarios (Jev alone is measured)
 - [ ] Dashboard for `/history`
-- [ ] Authentication for devices and operators
+- [x] Authentication for devices and operators (static tokens; rotation, TLS and per-device binding still open)
 
 ## Known limits
 
-The audit chain detects edits and deletions, but anyone with file access can
-rewrite the whole chain. The API has no authentication, so `requester` and
-`approver` are self-declared. Do not expose it beyond a trusted network.
+- The audit chain detects edits and deletions, but anyone with file access can
+  rewrite the whole chain.
+- Authentication is static bearer tokens read from environment variables. They
+  are shared secrets: no rotation, no expiry, no per-device binding, no TLS in
+  this repo, and anyone who can read the gateway's environment can read them. It
+  is not a full identity system. It does mean requester and approver come from
+  the token, not the request body, so self-approval is enforced against
+  authenticated names.
+- If `EDGE_DEVICE_TOKENS` and `EDGE_OPERATOR_TOKENS` are unset, auth is
+  **disabled** (demo mode), the gateway warns loudly, `/healthz` reports
+  `"auth": false`, and operator identity is a self-declared `X-Operator` header.
+- Do not expose the gateway beyond a trusted network, and put TLS in front of it
+  if tokens cross one.
 
 ## Repository map
 

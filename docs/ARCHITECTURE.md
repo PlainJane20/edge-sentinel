@@ -38,6 +38,7 @@ sequenceDiagram
 | Cascade | `agent/cascade.py` | Choose an action; degrade to rules if any model layer fails |
 | Policy | `agent/policy.py` | Per-operation risk table; approvals with expiry and single use |
 | Audit | `agent/audit.py` | Hash-chained append-only log with verification |
+| Auth | `agent/auth.py` | Bearer tokens for devices and operators, identity from token |
 | API | `agent/app.py` | Ingest, history, approval workflow, audit verification |
 
 ## Failure behavior
@@ -56,4 +57,4 @@ sequenceDiagram
 - Risk tiers come from a fixed table, never from model output.
 - Model layers can only choose among the four `Action` values.
 - The audit chain detects edits and deletions. It cannot stop someone with file access from rewriting the whole chain.
-- The HTTP API has no authentication yet; `requester` and `approver` are self-declared. Do not expose it beyond a trusted network.
+- Devices and operators authenticate with static bearer tokens from the environment (`agent/auth.py`); requester and approver identities come from the token, so self-approval is enforced against authenticated names. With no tokens configured, auth is disabled and identities are self-declared. The tokens are shared secrets with no rotation and no TLS here; do not expose the API beyond a trusted network.
