@@ -1,0 +1,434 @@
+[
+ {
+  "temp": 30.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "ignore",
+  "jev": "ignore",
+  "conf": 1.0,
+  "ms": 163.783208001405
+ },
+ {
+  "temp": 30.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.99,
+  "ms": 81.58691699645715
+ },
+ {
+  "temp": 30.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.8,
+  "ms": 121.43966700386954
+ },
+ {
+  "temp": 30.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.48,
+  "ms": 140.26833399839234
+ },
+ {
+  "temp": 45.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "ignore",
+  "jev": "ignore",
+  "conf": 0.99,
+  "ms": 217.2314589988673
+ },
+ {
+  "temp": 45.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.99,
+  "ms": 94.79120800097007
+ },
+ {
+  "temp": 45.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.76,
+  "ms": 136.45374999759952
+ },
+ {
+  "temp": 45.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "log",
+  "conf": 0.42,
+  "ms": 144.4342079994385
+ },
+ {
+  "temp": 58.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "ignore",
+  "jev": "ignore",
+  "conf": 0.96,
+  "ms": 144.3924170016544
+ },
+ {
+  "temp": 58.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.98,
+  "ms": 120.349000004353
+ },
+ {
+  "temp": 58.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.81,
+  "ms": 93.14520800398896
+ },
+ {
+  "temp": 58.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.57,
+  "ms": 131.6768340038834
+ },
+ {
+  "temp": 59.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "ignore",
+  "jev": "ignore",
+  "conf": 0.99,
+  "ms": 100.15379099786514
+ },
+ {
+  "temp": 59.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.98,
+  "ms": 124.59220799792092
+ },
+ {
+  "temp": 59.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.84,
+  "ms": 145.10008399520302
+ },
+ {
+  "temp": 59.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.48,
+  "ms": 132.72562500060303
+ },
+ {
+  "temp": 60.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 1.0,
+  "ms": 143.88649999455083
+ },
+ {
+  "temp": 60.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.99,
+  "ms": 142.01658299862174
+ },
+ {
+  "temp": 60.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.4,
+  "ms": 120.51549999887357
+ },
+ {
+  "temp": 60.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.49,
+  "ms": 166.56924999551848
+ },
+ {
+  "temp": 61.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 1.0,
+  "ms": 123.67329099652125
+ },
+ {
+  "temp": 61.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 1.0,
+  "ms": 136.18870799837168
+ },
+ {
+  "temp": 61.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "log",
+  "conf": 0.38,
+  "ms": 151.6360000023269
+ },
+ {
+  "temp": 61.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.51,
+  "ms": 189.38799999887124
+ },
+ {
+  "temp": 70.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.98,
+  "ms": 100.58462499728194
+ },
+ {
+  "temp": 70.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.99,
+  "ms": 76.48833299754187
+ },
+ {
+  "temp": 70.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.64,
+  "ms": 112.81404200417455
+ },
+ {
+  "temp": 70.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.64,
+  "ms": 104.24133299966343
+ },
+ {
+  "temp": 74.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.66,
+  "ms": 128.51024999690708
+ },
+ {
+  "temp": 74.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "log",
+  "jev": "log",
+  "conf": 0.99,
+  "ms": 154.4296670035692
+ },
+ {
+  "temp": 74.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.84,
+  "ms": 136.49270799942315
+ },
+ {
+  "temp": 74.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.66,
+  "ms": 140.79616600065492
+ },
+ {
+  "temp": 75.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.97,
+  "ms": 99.57958399900235
+ },
+ {
+  "temp": 75.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.87,
+  "ms": 123.04599999333732
+ },
+ {
+  "temp": 75.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.98,
+  "ms": 86.37058400199749
+ },
+ {
+  "temp": 75.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.93,
+  "ms": 125.19520799833117
+ },
+ {
+  "temp": 76.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.94,
+  "ms": 128.23587500315625
+ },
+ {
+  "temp": 76.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.83,
+  "ms": 140.72570799908135
+ },
+ {
+  "temp": 76.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.96,
+  "ms": 140.81816699763294
+ },
+ {
+  "temp": 76.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.94,
+  "ms": 152.65187499608146
+ },
+ {
+  "temp": 85.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.77,
+  "ms": 96.21320800215472
+ },
+ {
+  "temp": 85.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.51,
+  "ms": 105.28208400501171
+ },
+ {
+  "temp": 85.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.94,
+  "ms": 102.75208299572114
+ },
+ {
+  "temp": 85.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.95,
+  "ms": 103.99250000045868
+ },
+ {
+  "temp": 89.0,
+  "rssi": -50,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.44,
+  "ms": 122.75958399550291
+ },
+ {
+  "temp": 89.0,
+  "rssi": -90,
+  "heap": 150000,
+  "label": "alert",
+  "jev": "log",
+  "conf": 0.75,
+  "ms": 102.77545799908694
+ },
+ {
+  "temp": 89.0,
+  "rssi": -50,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.87,
+  "ms": 96.91220900276676
+ },
+ {
+  "temp": 89.0,
+  "rssi": -90,
+  "heap": 10000,
+  "label": "alert",
+  "jev": "alert",
+  "conf": 0.86,
+  "ms": 125.59279100241838
+ }
+]

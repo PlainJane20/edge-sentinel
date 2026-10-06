@@ -17,10 +17,23 @@ from models import Action, Decision, Reading
 
 log = logging.getLogger("edge-sentinel.cascade")
 
+# Single source of truth: the rules, the local hard limit and the model prompt
+# all read these, so they cannot drift apart. Jev needs the policy spelled out
+# in its question; without it, it guesses with near-uniform probabilities.
+TEMP_SHUTDOWN_C = 90
+TEMP_ALERT_C = 75
+HEAP_ALERT_B = 20_000
+TEMP_LOG_C = 60
+RSSI_LOG_DBM = -85
+
 INSTRUCTIONS = (
-    "You monitor an ESP32 sensor node. Given a reading, decide the action: "
+    "You monitor an ESP32 sensor node. Given a reading as JSON, decide the action: "
     "ignore (normal), log (slightly unusual), alert (needs a human), "
-    "shutdown (hardware at risk)."
+    "shutdown (hardware at risk). "
+    f"Rules: shutdown if temperature_c >= {TEMP_SHUTDOWN_C}. "
+    f"alert if temperature_c >= {TEMP_ALERT_C} or free_heap < {HEAP_ALERT_B}. "
+    f"log if temperature_c >= {TEMP_LOG_C} or rssi < {RSSI_LOG_DBM}. "
+    "Otherwise ignore."
 )
 
 JevFn = Callable[[Reading], "tuple[Action, float | None]"]
@@ -29,15 +42,15 @@ LlmFn = Callable[[Reading], Action]
 
 def hard_limit(r: Reading) -> Action | None:
     """Deterministic safety floor. Mirrors the threshold compiled into firmware."""
-    return Action.shutdown if r.temperature_c >= 90 else None
+    return Action.shutdown if r.temperature_c >= TEMP_SHUTDOWN_C else None
 
 
 def rules(r: Reading) -> Action:
-    if r.temperature_c >= 90:
+    if r.temperature_c >= TEMP_SHUTDOWN_C:
         return Action.shutdown
-    if r.temperature_c >= 75 or (r.free_heap and r.free_heap < 20_000):
+    if r.temperature_c >= TEMP_ALERT_C or (r.free_heap and r.free_heap < HEAP_ALERT_B):
         return Action.alert
-    if r.temperature_c >= 60 or r.rssi < -85:
+    if r.temperature_c >= TEMP_LOG_C or r.rssi < RSSI_LOG_DBM:
         return Action.log
     return Action.ignore
 

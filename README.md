@@ -50,9 +50,9 @@ returns typed decisions with confidence instead of text).
 |---|---|
 | **Problem** | An agent that acts on hardware must stay safe when its models are slow, wrong or down |
 | **Approach** | Local hard limit, then Jev, then LLM on low confidence, then rules; risk comes from a fixed table, not the model |
-| **Proof** | 16 offline tests covering escalation, fallback, approval expiry, self-approval and audit tampering |
+| **Proof** | 16 offline tests, plus a live run against Jev: 94% policy agreement on 48 readings, 31 of 31 correct when confident |
 | **Output** | A typed decision per reading, an approval workflow, and an audit chain that can be verified |
-| **Not yet** | Flashed hardware, live Jev results, relay delivery, measured end-to-end latency |
+| **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi, an LLM fallback run |
 
 ## Competencies demonstrated
 
@@ -72,6 +72,27 @@ Produced by the real cascade on simulated data (a temperature ramp, rules only,
 no models). Regenerate with `benchmarks/make_figures.py`.
 
 ![Decision per reading across a simulated temperature ramp](docs/images/decision_ramp.png)
+
+### Jev on sensor readings (live API)
+
+Run on 2026-10-05 with `benchmarks/sensor_eval.py`: 48 readings (12 temperatures
+including the 59/60, 74/75 and 89/90 boundaries, across good and bad Wi-Fi and
+heap), one run, escalation threshold 0.8. Labels come from the same written policy
+that is in Jev's instructions, so this measures **policy-following**, not
+independent accuracy.
+
+| Metric | Result |
+|---|---|
+| Agreement with the policy | 45 of 48 (94%) |
+| Confident (>= 0.8) | 31 of 48 (65%) |
+| Accuracy when confident | 31 of 31 |
+| Confident but wrong | 0 |
+| Escalated to fallback | 17 of 48 (35%) |
+| Latency (sequential, includes network from my laptop) | p50 125 ms, p95 167 ms |
+
+All three misses were low-confidence (0.38, 0.42, 0.75) and would have been escalated,
+which is the behavior the cascade depends on. Raw rows are in
+`benchmarks/sensor_eval_results.json`.
 
 Gateway-side cost, measured in-process on an Apple M4 Pro over 2,000 readings
 (`benchmarks/latency_probe.py`). This excludes Wi-Fi, HTTP and any model call,
@@ -95,6 +116,16 @@ so it is a floor and not an end-to-end figure:
 3. **The first simulated ramp never left the "log" band**, so the chart showed
    nothing useful. I changed the simulation to heat up and then cool down so all
    four actions appear. It is still simulated data, and the README says so.
+
+4. **Jev guesses unless the policy is in the question.** With only "decide the
+   action" in the instructions, Jev answered "alert" for a cool 38 °C chip with
+   near-uniform probabilities (0.2 to 0.3 each) and confidence 0.04. Spelling the
+   thresholds out in the instructions fixed it: confidence 1.0 on clear cases.
+   The thresholds now live in one place and feed the rules, the hard limit and the
+   prompt, so they cannot drift apart. The low confidence on the vague prompt is
+   itself useful: Jev signalled that it did not know.
+5. **Jev's confidence comes back as `{"response": 0.99}`**, a dict, not a number.
+   The extraction code already handled that shape; this run confirmed it.
 
 ## Architecture
 
@@ -156,9 +187,9 @@ cd firmware && pio run -t upload && pio device monitor
 ## What I'd add next
 
 - [ ] Compile and flash the firmware, then measure the Wi-Fi + HTTP hop
-- [ ] Run against the live Jev API and verify how confidence is returned
+- [x] Run against the live Jev API and verify how confidence is returned
 - [ ] Deliver approved commands to the device relay over MQTT
-- [ ] Benchmark Jev against an LLM on labeled sensor scenarios
+- [ ] Compare Jev against an LLM on the same sensor scenarios (Jev alone is measured)
 - [ ] Dashboard for `/history`
 - [ ] Authentication for devices and operators
 

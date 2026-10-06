@@ -8,11 +8,13 @@ Targets are design budgets, not results. The measured column is filled in only w
 | ESP32 to gateway (Wi-Fi + HTTP) | not set | not measured | needs hardware |
 | Cascade, rules path | 5 ms | p50 0.001 ms, p95 0.002 ms | `benchmarks/latency_probe.py`, in-process |
 | Audit append | 5 ms | p50 0.063 ms, p95 0.108 ms | `benchmarks/latency_probe.py`, in-process |
-| Jev call | not set | not measured | needs `TYPESAFE_API_KEY` |
+| Jev call | not set | p50 125 ms, p95 167 ms (48 calls) | `benchmarks/sensor_eval.py`, sequential, from a laptop over the internet, so it includes network |
 | LLM escalation | not set | not measured | needs `ANTHROPIC_API_KEY` |
 | Gateway to device (command) | not set | not implemented | |
 
-**Environment for measured rows:** Apple M4 Pro, Python 3.14, 2,000 readings, in-process. This excludes the network, HTTP parsing and any model call, so it is a floor, not an end-to-end figure.
+**In-process rows** (cascade, audit append): Apple M4 Pro, Python 3.14, 2,000 readings. These exclude the network, HTTP parsing and any model call, so they are a floor, not an end-to-end figure.
+
+**Jev row:** 48 sequential calls on 2026-10-05 from a laptop over the public internet. It depends on my network and TypeSafe's load that day, and says nothing about p99 or concurrency.
 
 ## Safety does not depend on this budget
 
