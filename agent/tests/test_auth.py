@@ -169,3 +169,13 @@ def test_env_tokens_used_by_default(tmp_path, monkeypatch):
     assert c.post("/readings", json=READING, headers=bearer("envdev")).status_code == 200
     assert c.post("/commands", json=CMD, headers=bearer("envop")).json()["requester"] == "zed"
     assert c.post("/commands", json=CMD).status_code == 401
+
+
+def test_dashboard_html_needs_no_token(secured):
+    c, _ = secured
+    r = c.get("/dashboard")
+    assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert "Edge Sentinel" in r.text
+    # the page itself carries no data and pulls nothing from other origins
+    assert "http://" not in r.text.replace("http://www.w3.org/2000/svg", "")
+    assert "https://" not in r.text
