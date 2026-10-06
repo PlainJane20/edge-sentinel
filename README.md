@@ -44,6 +44,15 @@ returns typed decisions with confidence instead of text).
 > path with [critical-path-radar](https://github.com/PlainJane20/critical-path-radar),
 > and score device health like [exec-status-rollup](https://github.com/PlainJane20/exec-status-rollup).
 
+## How it works, in plain terms
+
+![How Edge Sentinel works: ESP32, gateway, a cheapest-layer-first decision, policy and audit, and the decision returning to the device](docs/images/how-it-works.svg)
+
+The ESP32 measures. A gateway asks for a decision. The decision tries the cheapest
+layer that is confident enough: a hard safety limit with no AI, then Jev (fast, and it
+says how sure it is), then an LLM only for unusual cases. A policy layer decides what
+is allowed and logs it. The device then acts on the result.
+
 ## At a glance
 
 | | |
