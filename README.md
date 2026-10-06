@@ -74,9 +74,10 @@ no models). Regenerate with `benchmarks/make_figures.py`.
 ![Decision per reading across a simulated temperature ramp](docs/images/decision_ramp.png)
 
 The dashboard (`/dashboard`), captured with headless Chrome against a local
-gateway while `simulate.py` ran for about 20 seconds (rules only, auth off, so
-the badge says demo). The readings are simulated and random, so a run may show
-no alerts:
+gateway (rules only, auth off, so the badge says demo). The 20 readings were a
+scripted temperature ramp posted to `POST /readings`, chosen to pass through all
+four actions. They are simulated, not from a device. Random runs of
+`simulate.py` drift upward slowly and may show no alerts:
 
 ![Edge Sentinel dashboard showing a temperature line, decision markers, counts, latest decisions and the audit-chain badge](docs/images/dashboard.png)
 
