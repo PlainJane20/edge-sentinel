@@ -8,8 +8,8 @@ Targets are design budgets, not results. The measured column is filled in only w
 | ESP32 to gateway (Wi-Fi + HTTP) | not set | not measured | needs hardware |
 | Cascade, rules path | 5 ms | p50 0.001 ms, p95 0.002 ms | `benchmarks/latency_probe.py`, in-process |
 | Audit append | 5 ms | p50 0.063 ms, p95 0.108 ms | `benchmarks/latency_probe.py`, in-process |
-| Jev call | not set | p50 125 ms, p95 167 ms (48 calls) | `benchmarks/sensor_eval.py`, sequential, from a laptop over the internet, so it includes network |
-| LLM escalation | not set | not measured | needs `ANTHROPIC_API_KEY` |
+| Jev call | not set | p50 117-125 ms, p95 167-182 ms (two runs of 48 calls) | `benchmarks/sensor_eval.py`, sequential, from a laptop over the internet, so it includes network |
+| LLM escalation (Claude Haiku 4.5) | not set | p50 627 ms, p95 809 ms (48 calls) | `benchmarks/sensor_eval.py`, sequential, over the public internet |
 | Gateway to device (command) | not set | not implemented | |
 
 **In-process rows** (cascade, audit append): Apple M4 Pro, Python 3.14, 2,000 readings. These exclude the network, HTTP parsing and any model call, so they are a floor, not an end-to-end figure.

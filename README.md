@@ -52,7 +52,7 @@ returns typed decisions with confidence instead of text).
 | **Approach** | Local hard limit, then Jev, then LLM on low confidence, then rules; risk comes from a fixed table, not the model |
 | **Proof** | 35 offline tests, plus a live run against Jev: 94% policy agreement on 48 readings, 31 of 31 correct when confident |
 | **Output** | A typed decision per reading, token-authenticated approvals, a live dashboard, and an audit chain that can be verified |
-| **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi, an LLM fallback run |
+| **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi |
 
 ## Competencies demonstrated
 
@@ -81,26 +81,35 @@ four actions. They are simulated, not from a device. Random runs of
 
 ![Edge Sentinel dashboard showing a temperature line, decision markers, counts, latest decisions and the audit-chain badge](docs/images/dashboard.png)
 
-### Jev on sensor readings (live API)
+### Jev vs Claude Haiku on sensor readings (live APIs)
 
 Run on 2026-10-05 with `benchmarks/sensor_eval.py`: 48 readings (12 temperatures
 including the 59/60, 74/75 and 89/90 boundaries, across good and bad Wi-Fi and
-heap), one run, escalation threshold 0.8. Labels come from the same written policy
-that is in Jev's instructions, so this measures **policy-following**, not
-independent accuracy.
+heap). Both models got the same instruction with the thresholds spelled out. Labels
+come from the same written policy, so this measures **policy-following**, not
+independent accuracy. Requests were sequential over the public internet, so latency
+includes the network.
 
-| Metric | Result |
-|---|---|
-| Agreement with the policy | 45 of 48 (94%) |
-| Confident (>= 0.8) | 31 of 48 (65%) |
-| Accuracy when confident | 31 of 31 |
-| Confident but wrong | 0 |
-| Escalated to fallback | 17 of 48 (35%) |
-| Latency (sequential, includes network from my laptop) | p50 125 ms, p95 167 ms |
+| Metric | Jev (`jev-latest`) | Claude Haiku 4.5 |
+|---|---|---|
+| Agreement with the policy | 46 of 48 (96%) on this run; 45 of 48 (94%) on an earlier run | 41 of 48 (85%), one run |
+| Latency p50 / p95 | 117 / 182 ms (earlier run: 125 / 167 ms) | 627 / 809 ms |
+| Confidence signal | yes: 30 of 48 readings at or above 0.8, all 30 correct | none returned |
+| Confident but wrong | 0 | not applicable |
 
-All three misses were low-confidence (0.38, 0.42, 0.75) and would have been escalated,
-which is the behavior the cascade depends on. Raw rows are in
-`benchmarks/sensor_eval_results.json`.
+Jev's misses were both 89 °C readings labeled "alert" that it called "log", at
+confidence 0.35 and 0.74. Both are below the 0.8 threshold, so the cascade would have
+escalated them. Haiku's seven misses were not flagged in any way: it skipped the
+low-heap rule on four readings (60/61 °C with 10,000 bytes free), called 74 °C "ignore"
+where the policy says "log", called 89 °C "log" twice instead of "alert", and called
+60 °C with weak Wi-Fi and low heap **"shutdown"**, an over-reaction. Details are in
+`benchmarks/sensor_eval_results.json` (Jev) and `benchmarks/sensor_eval_llm_results.json` (Haiku).
+
+**Read this with care:** 48 hand-built readings, one run for Haiku and two for Jev,
+a small model chosen for speed, and labels taken from the policy written in the prompt.
+A larger model, a differently worded prompt, or real sensor data could change the gap.
+What it does show: a calibrated confidence signal lets the cascade catch its own
+uncertain calls, while the LLM was wrong silently.
 
 Gateway-side cost, measured in-process on an Apple M4 Pro over 2,000 readings
 (`benchmarks/latency_probe.py`). This excludes Wi-Fi, HTTP and any model call,
@@ -219,7 +228,7 @@ cd firmware && pio run -t upload && pio device monitor
 - [ ] Compile and flash the firmware, then measure the Wi-Fi + HTTP hop
 - [x] Run against the live Jev API and verify how confidence is returned
 - [ ] Deliver approved commands to the device relay over MQTT
-- [ ] Compare Jev against an LLM on the same sensor scenarios (Jev alone is measured)
+- [x] Compare Jev against an LLM on the same sensor scenarios (done: 48 readings)
 - [x] Dashboard for `/history` (`/dashboard`, single file, no build step)
 - [x] Authentication for devices and operators (static tokens; rotation, TLS and per-device binding still open)
 

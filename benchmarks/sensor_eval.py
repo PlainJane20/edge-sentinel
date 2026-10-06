@@ -16,7 +16,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "agent"))
 
-from cascade import TEMP_SHUTDOWN_C, build_jev, rules
+import os
+
+from cascade import TEMP_SHUTDOWN_C, build_jev, build_llm, rules
 from models import Reading
 
 THRESHOLD = 0.8
@@ -53,4 +55,23 @@ print("\nmisses:")
 for x in rows:
     if x["jev"] != x["label"]:
         print(f"  {x['temp']}C rssi={x['rssi']} heap={x['heap']}: label={x['label']} jev={x['jev']} conf={x['conf']:.2f}")
+
+if os.getenv("ANTHROPIC_API_KEY"):
+    llm = build_llm("anthropic:claude-haiku-4-5-20251001")
+    lrows = []
+    for r in cases:
+        t0 = time.perf_counter()
+        a = llm(r)
+        lrows.append({"temp": r.temperature_c, "rssi": r.rssi, "heap": r.free_heap,
+                      "label": rules(r).value, "llm": a.value,
+                      "ms": (time.perf_counter() - t0) * 1000})
+    lms = sorted(x["ms"] for x in lrows)
+    lok = sum(x["llm"] == x["label"] for x in lrows)
+    print(f"\nclaude-haiku-4-5 on the same {n} readings")
+    print(f"agreement with policy:      {lok}/{n} = {lok/n:.0%}")
+    print(f"latency p50={statistics.median(lms):.0f} ms  p95={lms[int(n*.95)]:.0f} ms  (sequential, includes network)")
+    for x in lrows:
+        if x["llm"] != x["label"]:
+            print(f"  {x['temp']}C rssi={x['rssi']} heap={x['heap']}: label={x['label']} llm={x['llm']}")
+    json.dump(lrows, open(Path(__file__).with_name("sensor_eval_llm_results.json"), "w"), indent=1)
 json.dump(rows, open(Path(__file__).with_name("sensor_eval_results.json"), "w"), indent=1)
