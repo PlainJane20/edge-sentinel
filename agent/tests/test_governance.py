@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import create_app
 from audit import AuditLog
+from auth import AuthConfig
 from cascade import make_cascade
 from policy import ApprovalError, ApprovalStore
 
@@ -76,16 +77,17 @@ def test_execute_requires_approval(tmp_path):
 
 def test_api_flow_and_audit(tmp_path):
     app = create_app(make_cascade(), AuditLog(tmp_path / "a.jsonl"),
-                     ApprovalStore(tmp_path / "ap.db"))
+                     ApprovalStore(tmp_path / "ap.db"), AuthConfig())
     c = TestClient(app)
     d = c.post("/readings", json={"device_id": "d", "temperature_c": 95}).json()
     assert d["action"] == "shutdown"
 
-    rid = c.post("/commands", json={"op": "reenergize", "device_id": "d",
-                                    "requester": "alice"}).json()["id"]
+    rid = c.post("/commands", json={"op": "reenergize", "device_id": "d"},
+                   headers={"X-Operator": "alice"}).json()["id"]
     assert c.post(f"/commands/{rid}/execute").status_code == 409
-    assert c.post(f"/approvals/{rid}/approve", json={"approver": "alice"}).status_code == 409
-    assert c.post(f"/approvals/{rid}/approve", json={"approver": "bob"}).status_code == 200
-    assert c.post(f"/commands/{rid}/execute").status_code == 200
+    alice, bob = {"X-Operator": "alice"}, {"X-Operator": "bob"}
+    assert c.post(f"/approvals/{rid}/approve", headers=alice).status_code == 409
+    assert c.post(f"/approvals/{rid}/approve", headers=bob).status_code == 200
+    assert c.post(f"/commands/{rid}/execute", headers=bob).status_code == 200
     assert c.get("/audit/verify").json()["ok"] is True
     assert len(c.get("/history").json()) == 1
