@@ -28,6 +28,8 @@ gateway logs a loud warning at startup and `GET /healthz` returns `"auth": false
 In that mode the operator identity is the optional `X-Operator` header
 (default `anonymous`), which is self-declared; use it only on a trusted machine.
 `GET /healthz` and `GET /dashboard` (static HTML, no data) never need a token.
+The dashboard polls `/history`, `/audit/verify` and `/healthz`; with auth on it
+sends an operator token typed into the page (held in `sessionStorage`).
 
 ## Device to gateway (HTTP, current)
 

@@ -10,7 +10,7 @@
 [![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](firmware/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](agent/app.py)
 [![TypeSafe Jev](https://img.shields.io/badge/TypeSafe-Jev-14b8a6?style=for-the-badge)](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
-[![Tests](https://img.shields.io/badge/Unit_tests-16_passing-2a78d6?style=for-the-badge)](agent/tests/)
+[![Tests](https://img.shields.io/badge/Unit_tests-35_passing-2a78d6?style=for-the-badge)](agent/tests/)
 
 </div>
 
@@ -50,8 +50,8 @@ returns typed decisions with confidence instead of text).
 |---|---|
 | **Problem** | An agent that acts on hardware must stay safe when its models are slow, wrong or down |
 | **Approach** | Local hard limit, then Jev, then LLM on low confidence, then rules; risk comes from a fixed table, not the model |
-| **Proof** | 16 offline tests, plus a live run against Jev: 94% policy agreement on 48 readings, 31 of 31 correct when confident |
-| **Output** | A typed decision per reading, an approval workflow, and an audit chain that can be verified |
+| **Proof** | 35 offline tests, plus a live run against Jev: 94% policy agreement on 48 readings, 31 of 31 correct when confident |
+| **Output** | A typed decision per reading, token-authenticated approvals, a live dashboard, and an audit chain that can be verified |
 | **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi, an LLM fallback run |
 
 ## Competencies demonstrated
@@ -72,6 +72,13 @@ Produced by the real cascade on simulated data (a temperature ramp, rules only,
 no models). Regenerate with `benchmarks/make_figures.py`.
 
 ![Decision per reading across a simulated temperature ramp](docs/images/decision_ramp.png)
+
+The dashboard (`/dashboard`), captured with headless Chrome against a local
+gateway while `simulate.py` ran for about 20 seconds (rules only, auth off, so
+the badge says demo). The readings are simulated and random, so a run may show
+no alerts:
+
+![Edge Sentinel dashboard showing a temperature line, decision markers, counts, latest decisions and the audit-chain badge](docs/images/dashboard.png)
 
 ### Jev on sensor readings (live API)
 
@@ -164,9 +171,31 @@ python -m pytest
 ```bash
 uvicorn app:app --reload          # terminal 1
 python simulate.py                # terminal 2: simulated ESP32
+open http://localhost:8000/dashboard
 curl localhost:8000/history
 curl localhost:8000/audit/verify
 ```
+
+With no tokens set, auth is **disabled** and the gateway logs a warning (fine
+for a local demo only). To turn it on, set tokens before starting the gateway:
+
+```bash
+export EDGE_DEVICE_TOKENS=dev-secret-1,dev-secret-2          # devices: POST /readings
+export EDGE_OPERATOR_TOKENS=alice:alice-secret,bob:bob-secret  # name:token
+uvicorn app:app
+python simulate.py --token dev-secret-1                      # or EDGE_DEVICE_TOKEN=...
+
+# identity comes from the token, never the body
+curl -XPOST localhost:8000/commands -H "Authorization: Bearer alice-secret" \
+     -H 'content-type: application/json' -d '{"op":"reenergize","device_id":"d"}'
+curl -XPOST localhost:8000/approvals/<id>/approve -H "Authorization: Bearer bob-secret"
+curl -XPOST localhost:8000/commands/<id>/execute  -H "Authorization: Bearer bob-secret"
+```
+
+Paste an operator token into the dashboard's token box to view `/history` and
+the audit badge when auth is on (kept in `sessionStorage` for that tab only).
+`/healthz` reports `"auth": true|false`. Replace the example secrets with long
+random values (for example `openssl rand -hex 24`); never commit them.
 
 Optional model layers:
 
@@ -190,7 +219,7 @@ cd firmware && pio run -t upload && pio device monitor
 - [x] Run against the live Jev API and verify how confidence is returned
 - [ ] Deliver approved commands to the device relay over MQTT
 - [ ] Compare Jev against an LLM on the same sensor scenarios (Jev alone is measured)
-- [ ] Dashboard for `/history`
+- [x] Dashboard for `/history` (`/dashboard`, single file, no build step)
 - [x] Authentication for devices and operators (static tokens; rotation, TLS and per-device binding still open)
 
 ## Known limits
@@ -213,7 +242,8 @@ cd firmware && pio run -t upload && pio device monitor
 
 ```
 edge-sentinel/
-├── agent/          cascade, policy, audit, API, simulator, tests
+├── agent/          cascade, policy, audit, auth, API, simulator, tests
+│   └── static/     single-file dashboard served at /dashboard
 ├── firmware/       ESP32 PlatformIO project
 ├── benchmarks/     figure generator and latency probe
 └── docs/           architecture, interface contract, latency budget, competency map, ADRs

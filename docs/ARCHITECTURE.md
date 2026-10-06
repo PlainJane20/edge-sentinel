@@ -39,6 +39,7 @@ sequenceDiagram
 | Policy | `agent/policy.py` | Per-operation risk table; approvals with expiry and single use |
 | Audit | `agent/audit.py` | Hash-chained append-only log with verification |
 | Auth | `agent/auth.py` | Bearer tokens for devices and operators, identity from token |
+| Dashboard | `agent/static/dashboard.html` | Polls the API; inline SVG chart, no build step, no external requests |
 | API | `agent/app.py` | Ingest, history, approval workflow, audit verification |
 
 ## Failure behavior
