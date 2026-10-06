@@ -17,3 +17,22 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -r agent/requirements.txt
       - run: python -m pytest agent/tests -q
+
+  firmware:
+    runs-on: ubuntu-latest
+    env:
+      WIFI_SSID: ci-dummy
+      WIFI_PASS: ci-dummy
+      GATEWAY_URL: http://192.168.1.10:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('firmware/platformio.ini') }}
+      - run: pip install platformio
+      - run: pio run
+        working-directory: firmware

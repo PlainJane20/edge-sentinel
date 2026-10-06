@@ -52,7 +52,7 @@ returns typed decisions with confidence instead of text).
 | **Approach** | Local hard limit, then Jev, then LLM on low confidence, then rules; risk comes from a fixed table, not the model |
 | **Proof** | 35 offline tests, plus a live run against Jev: 94% policy agreement on 48 readings, 31 of 31 correct when confident |
 | **Output** | A typed decision per reading, token-authenticated approvals, a live dashboard, and an audit chain that can be verified |
-| **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi |
+| **Not yet** | Flashed hardware, relay delivery, end-to-end latency over Wi-Fi. The firmware compiles (CI builds it) but has never run on a board |
 
 ## Competencies demonstrated
 
@@ -225,7 +225,8 @@ cd firmware && pio run -t upload && pio device monitor
 
 ## What I'd add next
 
-- [ ] Compile and flash the firmware, then measure the Wi-Fi + HTTP hop
+- [x] Compile the firmware (done: `esp32dev`, `espressif32@7.1.3`, RAM 14.3%, flash 70.3%, built in CI)
+- [ ] Flash a real board and measure the Wi-Fi + HTTP hop
 - [x] Run against the live Jev API and verify how confidence is returned
 - [ ] Deliver approved commands to the device relay over MQTT
 - [x] Compare Jev against an LLM on the same sensor scenarios (done: 48 readings)
